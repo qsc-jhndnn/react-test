@@ -1,11 +1,20 @@
 import { Monaco } from "@monaco-editor/react";
+//import parserx from "./parser";
 
 export default class editorX {
 
   monaco: Monaco;
 
+  controls: Array<string>;
+
   constructor(monaco:Monaco) {
     this.monaco = monaco;
+    this.controls = ["Control_1", "Control_2", "Mute"];
+  }
+
+  parseLua(lua: any) {
+  //  let parser = new parserx();
+  //  parser.parse(lua);
   }
 
   createMathOptions() {
@@ -54,6 +63,12 @@ export default class editorX {
         insertText: 'math',
       },
       {
+        label: 'Controls',
+        kind: this.monaco.languages.CompletionItemKind.Module,
+        documentation: "The controls",
+        insertText: 'Controls',
+      },
+      {
         label: 'string',
         kind: this.monaco.languages.CompletionItemKind.Module,
         documentation: "Some string crap",
@@ -80,44 +95,65 @@ export default class editorX {
     ];
   }
 
-  getPrevWord(model: any, position: any, result: Array<string>) {
-    if(position.column > 0 )
-    {
-      var prevAt = model.getWordAtPosition(position);
-      if(prevAt != null && prevAt.word != null) {
-        result.push(prevAt.word);
-        position.column = prevAt.startColumn - 1;
-        this.getPrevWord(model, position, result);
+  createControlOptions(tok:string) {
+    var options = [] as any;
+    if(tok === "Controls.") {
+      this.controls.forEach(ctl => {
+        let opt = {
+          label: ctl,
+          kind: this.monaco.languages.CompletionItemKind.Field,
+          documentation: "a control",
+          insertText: ctl
+        };
+        options.push(opt);
+      });
+    }
+    else {
+      // split on .
+      let toks = tok.split(".");
+      if(toks.length == 3 && toks[2] === "") {
+        if(this.controls.includes(toks[1])) {
+          options.push({
+            label: 'String',
+            kind: this.monaco.languages.CompletionItemKind.Function,
+            insertText: "String"
+          });
+          options.push({
+            label: 'Value',
+            kind: this.monaco.languages.CompletionItemKind.Function,
+            insertText: "Value"
+          });
+          options.push({
+            label: 'Position',
+            kind: this.monaco.languages.CompletionItemKind.Function,
+            insertText: "Position"
+          });
+        }
+
       }
     }
+    return options;
   }
 
+  getCompletionOptions(tok:string) {
+    if(tok.length > 0 && tok[tok.length-1] == ".") {
+      if(tok.startsWith("Controls.")) return this.createControlOptions(tok);
+      if(tok == "math.") return this.createMathOptions();
+      else if(tok == "string.") return this.createStringOptions();
+      return [];
+    }
+    else return this.globalProposals(); 
+  }
 
   provideCompletionItems(model : any, position : any, context : any, token: any) {
-    var word = model.getWordUntilPosition(position);
-    position.column = position.column - 1;
 
-    let result : Array<string> = [];
-//    var other;
-//    Object.assign(other, position);
-//    this.getPrevWord(model, other, result);
+    let line = model.getValueInRange({startLineNumber: position.lineNumber, startColumn: 1, endLineNumber: position.lineNumber, endColumn: position.column});
+    let tokens = line.split(/(\s+)/);
 
-    console.log(result.join());
-    if (context.triggerKind === this.monaco.languages.CompletionTriggerKind.TriggerCharacter &&
-      context.triggerCharacter === ".") {
-      // get previous word
-      position.column = position.column - 1;
-      var prevWord = model.getWordAtPosition(position);
-      if(prevWord != null) {
-        if (prevWord.word === "math") return { suggestions: this.createMathOptions() };
-        else if (prevWord.word === "string") return { suggestions: this.createStringOptions() };
-      }
-      return { suggestions: [] };
-    }
-    if (context.triggerKind === this.monaco.languages.CompletionTriggerKind.Invoke && word.word === "") {
-      return { suggestions: this.globalProposals() };
-    }
-    return { suggestions: this.globalProposals() };
+    let tok = tokens[tokens.length-1];
+    console.log(tok);
+
+    return { suggestions: this.getCompletionOptions(tok) };
   }
 
   resolveCompletionItem(item: any, token: any) {
