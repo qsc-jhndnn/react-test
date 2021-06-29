@@ -38,6 +38,7 @@ export default class editorX {
       {
         label: 'length',
         kind: this.monaco.languages.CompletionItemKind.Function,
+        detail: "THIS IS BIG",
         documentation: "go big",
         insertText: 'length(',
       },
@@ -79,19 +80,38 @@ export default class editorX {
     ];
   }
 
+  getPrevWord(model: any, position: any, result: Array<string>) {
+    if(position.column > 0 )
+    {
+      var prevAt = model.getWordAtPosition(position);
+      if(prevAt != null && prevAt.word != null) {
+        result.push(prevAt.word);
+        position.column = prevAt.startColumn - 1;
+        this.getPrevWord(model, position, result);
+      }
+    }
+  }
+
+
   provideCompletionItems(model : any, position : any, context : any, token: any) {
     var word = model.getWordUntilPosition(position);
     position.column = position.column - 1;
-    //var prevAt = model.getWordAtPosition(position);
-    //var prevUntil = model.getWordUntilPosition(position);
 
+    let result : Array<string> = [];
+//    var other;
+//    Object.assign(other, position);
+//    this.getPrevWord(model, other, result);
+
+    console.log(result.join());
     if (context.triggerKind === this.monaco.languages.CompletionTriggerKind.TriggerCharacter &&
       context.triggerCharacter === ".") {
       // get previous word
       position.column = position.column - 1;
       var prevWord = model.getWordAtPosition(position);
-      if (prevWord.word === "math") return { suggestions: this.createMathOptions() };
-      else if (prevWord.word === "string") return { suggestions: this.createStringOptions() };
+      if(prevWord != null) {
+        if (prevWord.word === "math") return { suggestions: this.createMathOptions() };
+        else if (prevWord.word === "string") return { suggestions: this.createStringOptions() };
+      }
       return { suggestions: [] };
     }
     if (context.triggerKind === this.monaco.languages.CompletionTriggerKind.Invoke && word.word === "") {
