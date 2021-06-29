@@ -1,5 +1,4 @@
 import { Monaco } from "@monaco-editor/react";
-//import parserx from "./parser";
 
 export default class editorX {
 
@@ -24,13 +23,17 @@ export default class editorX {
         kind: this.monaco.languages.CompletionItemKind.Function,
         detail: "some detail here...",
         documentation: "go small",
-        insertText: 'min(',
+        /* eslint-disable no-template-curly-in-string */
+        insertText: "min(${1:v1}, ${2:v2})",
+        insertTextRules: this.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
       },
       {
         label: 'max',
         kind: this.monaco.languages.CompletionItemKind.Function,
         documentation: "go big",
-        insertText: 'max(',
+        /* eslint-disable no-template-curly-in-string */
+        insertText: "max(${1:v1}, ${2:v2})",
+        insertTextRules: this.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
       },
     ];
   }
@@ -53,6 +56,7 @@ export default class editorX {
       },
     ];
   }
+
 
   globalProposals() {
     return [
@@ -78,7 +82,15 @@ export default class editorX {
         label: 'function',
         kind: this.monaco.languages.CompletionItemKind.Keyword,
         documentation: "write a function",
-        insertText: 'function',
+        insertText: 'function ',
+      },
+      {
+        label: 'new function',
+        kind: this.monaco.languages.CompletionItemKind.Snippet,
+        documentation: "create a function",
+        /* eslint-disable no-template-curly-in-string */
+        insertText: 'function ${1:functionName}(${2:args})\n  ${3:body}\nend\n',
+        insertTextRules: this.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
       },
       {
         label: 'end',
@@ -111,21 +123,21 @@ export default class editorX {
     else {
       // split on .
       let toks = tok.split(".");
-      if(toks.length == 3 && toks[2] === "") {
+      if(toks.length === 3 && toks[2] === "") {
         if(this.controls.includes(toks[1])) {
           options.push({
             label: 'String',
-            kind: this.monaco.languages.CompletionItemKind.Function,
+            kind: this.monaco.languages.CompletionItemKind.Field,
             insertText: "String"
           });
           options.push({
             label: 'Value',
-            kind: this.monaco.languages.CompletionItemKind.Function,
+            kind: this.monaco.languages.CompletionItemKind.Field,
             insertText: "Value"
           });
           options.push({
             label: 'Position',
-            kind: this.monaco.languages.CompletionItemKind.Function,
+            kind: this.monaco.languages.CompletionItemKind.Field,
             insertText: "Position"
           });
         }
@@ -136,13 +148,13 @@ export default class editorX {
   }
 
   getCompletionOptions(tok:string) {
-    if(tok.length > 0 && tok[tok.length-1] == ".") {
+    if(tok.length > 0 && tok[tok.length-1] === ".") {
       if(tok.startsWith("Controls.")) return this.createControlOptions(tok);
-      if(tok == "math.") return this.createMathOptions();
-      else if(tok == "string.") return this.createStringOptions();
+      else if(tok === "math.") return this.createMathOptions();
+      else if(tok === "string.") return this.createStringOptions();
       return [];
     }
-    else return this.globalProposals(); 
+    return this.globalProposals(); 
   }
 
   provideCompletionItems(model : any, position : any, context : any, token: any) {
@@ -151,8 +163,6 @@ export default class editorX {
     let tokens = line.split(/(\s+)/);
 
     let tok = tokens[tokens.length-1];
-    console.log(tok);
-
     return { suggestions: this.getCompletionOptions(tok) };
   }
 
