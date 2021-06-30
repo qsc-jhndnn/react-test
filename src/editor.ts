@@ -91,7 +91,7 @@ export default class editorX {
         detail: "function snippet",
         documentation: "create a function",
         /* eslint-disable no-template-curly-in-string */
-        insertText: 'function ${1:functionName}(${2:args})\n  ${3:body}\nend\n',
+        insertText: 'function ${1:functionName}(${2:args})\n  \nend\n',
         insertTextRules: this.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
       },
       {
