@@ -9,9 +9,7 @@ class visitor {
     if (!ctx) {
       return;
     }
-
     // types are stolen from monaco but i'm too lazy to import them...
-
     if (ctx.ruleIndex === luaParser.RULE_attnamelist || ctx.ruleIndex === luaParser.RULE_var_) {
       this.keywords.add({
         label: ctx.getText(),
@@ -44,9 +42,35 @@ class visitor {
   }
 }
 
+class errorListener extends antlr4.error.ErrorListener {
+  errors = [];
+  syntaxError(recognizer, offendingSymbol, line, column, msg, err) {
+    this.errors.push(
+      this.info = {
+        offendingSymbol: offendingSymbol,
+        line: line,
+        column: column,
+        msg: msg,
+        err: err
+      });
+    }
+}
+
 export default class parser {
 
-  parse(lua) {
+  check_code(lua) {
+    const chars = new antlr4.InputStream(lua);
+    const lexer = new luaLexer(chars);
+    const tokens = new antlr4.CommonTokenStream(lexer);
+    const parser = new luaParser(tokens);
+    parser.removeErrorListeners();
+    var errListener = new errorListener();
+    parser.addErrorListener(errListener);
+    parser.chunk();
+    return errListener.errors;
+  }
+
+  get_tokens(lua) {
     const chars = new antlr4.InputStream(lua);
     const lexer = new luaLexer(chars);
     const tokens = new antlr4.CommonTokenStream(lexer);

@@ -7,14 +7,29 @@ export default class editorX {
 
   controls: Array<string>;
 
-  constructor(monaco:Monaco) {
+  constructor(editor: any, monaco:Monaco) {
     this.monaco = monaco;
-    this.controls = ["Control_1", "Control_2", "Mute"];
-  }
 
-  parseLua(lua: any) {
-    let parser = new parserx();
-    parser.parse(lua);
+    editor.getModel().onDidChangeContent((e)=> {
+      let model = editor.getModel();
+      let parser = new parserx();
+      let errors = parser.check_code(model.getValue());
+
+      var markerData = [] as any;
+      errors.forEach(err => {
+        markerData.push({
+          message: err.msg,
+          startLineNumber: err.line,
+          endLineNumber: err.line,
+          startColumn: err.column,
+          endColumn: err.column,
+          severity: this.monaco.MarkerSeverity.Error,
+        });
+      });
+      this.monaco.editor.setModelMarkers(model, model.id, markerData);
+    });
+
+    this.controls = ["Control_1", "Control_2", "Mute"];
   }
 
   createMathOptions() {
@@ -170,11 +185,11 @@ export default class editorX {
     // for right now if the user pressed a '.' don't show the parsed stuff
 
     if(context.triggerKind !== this.monaco.languages.CompletionTriggerKind.TriggerCharacter) {
-      // parse lua to get variables and functions
       let content = model.getValueInRange({startLineNumber: 1, startColumn: 1, endLineNumber: position.lineNumber, endColumn: position.column});
       let parser = new parserx();
-      let vars = parser.parse(content);
-      vars.forEach(element => {
+      let tokens = parser.get_tokens(content);
+      // parse lua to get variables and functions
+      tokens.forEach(element => {
         sugs.push({
           label: element.label,
           detail: element.detail,

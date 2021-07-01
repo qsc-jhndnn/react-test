@@ -8,11 +8,11 @@ class App extends React.Component {
   }
 
   editorWillMount(monaco) {
-    var editor = new editorX(monaco);
-    monaco.languages.registerCompletionItemProvider("lua", editor.getLuaCompletionProvider(monaco));
   }
 
   handleEditorDidMount(editor, monaco) {
+    var editor = new editorX(editor, monaco);
+    monaco.languages.registerCompletionItemProvider("lua", editor.getLuaCompletionProvider(monaco));
   }
 
   render() {
