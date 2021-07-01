@@ -106,7 +106,7 @@ export default class editorX {
         detail: "function snippet",
         documentation: "create a function",
         /* eslint-disable no-template-curly-in-string */
-        insertText: 'function ${1:functionName}(${2:args})\n  \nend\n',
+        insertText: 'function ${1:functionName}(${2:...})\n  ${3:--body}\nend\n',
         insertTextRules: this.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
       },
       {
@@ -202,6 +202,22 @@ export default class editorX {
     return { suggestions: sugs };
   }
 
+
+  provideHover(model : any, position : any, token: any) {
+    let word = model.getWordAtPosition(position);
+    let contents = [] as any;
+    if(word.word === "max") {
+      contents.push({ value : '```lua\n(function) math.max(val,...)\n```' });
+      contents.push({ value : 'return the max value of something' });
+    }
+    else if(word.word === "min") {
+      contents.push({ value : '```lua\nmath.min(val,...)\n```' });
+      contents.push({ value : 'return the min value of something' });
+    }
+    return {contents: contents };        
+  }
+
+
   resolveCompletionItem(item: any, token: any) {
     console.log("resolveCompletionItem")
   }
@@ -213,4 +229,13 @@ export default class editorX {
       resolveCompletionItem: (item: any, token: any) => { return this.resolveCompletionItem(item, token) },
     }
   }
+
+  getHoverProvider(monaco: Monaco) {
+    return {
+      provideHover: (model : any, position : any, token: any) => { 
+        return this.provideHover(model, position, token); 
+      },
+    }
+  }
+
 }
