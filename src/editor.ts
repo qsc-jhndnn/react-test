@@ -82,12 +82,6 @@ export default class editorX {
       documentation: "STOP IT!",
       insertText: 'end ',
     });
-    props.push({
-      label: 'end',
-      kind: this.monaco.languages.CompletionItemKind.Keyword,
-      documentation: "STOP IT!",
-      insertText: 'end ',
-    });
     return props;
   }
 
