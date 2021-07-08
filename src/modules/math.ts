@@ -16,7 +16,7 @@ export class mathLib extends optionLib {
         hover : "math.abs(x)",
         hoverDetails : "returns the absolute value of x",
         /* eslint-disable no-template-curly-in-string */
-        insertText : "abs(${1:x})"
+        insertText : "abs"//(${1:x})"
       },
       {
         name : "acos",

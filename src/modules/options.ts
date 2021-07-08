@@ -49,8 +49,10 @@ export class optionLib {
         detail: value.hoverDetails,
         documentation: "documentation",
         /* eslint-disable no-template-curly-in-string */
-        insertText: value.insertText,
-        insertTextRules: rules
+        insertText: value.name,
+        insertTextRules: rules,
+        commitCharacters : ["("]
+
       };
     });
     return x;
