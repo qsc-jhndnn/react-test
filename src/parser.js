@@ -45,6 +45,7 @@ class visitor {
 class errorListener extends antlr4.error.ErrorListener {
   errors = [];
   syntaxError(recognizer, offendingSymbol, line, column, msg, err) {
+    console.log("syntaxError");
     this.errors.push(
       this.info = {
         offendingSymbol: offendingSymbol,
@@ -53,6 +54,17 @@ class errorListener extends antlr4.error.ErrorListener {
         msg: msg,
         err: err
       });
+    }
+    reportAmbiguity(recognizer, dfa, startIndex, stopIndex, exact, ambigAlts, configs) {
+      console.log("reportAmbiguity");
+    }
+
+    reportAttemptingFullContext(recognizer, dfa, startIndex, stopIndex, conflictingAlts, configs) {
+      console.log("reportAttemptingFullContext");
+    }
+
+    reportContextSensitivity(recognizer, dfa, startIndex, stopIndex, prediction, configs) {
+      console.log("reportAttemptingFullContext");
     }
 }
 

@@ -23,7 +23,7 @@ class App extends React.Component {
 
   render() {
 
-      let code = `function foo() return "hey" end\n\nmath.max(3,4)\n`;
+      let code = `function foo() return "hey" end\n\nbob = math.max(3,4)\n`;
       return (
         <div style={{ boxSizing:'border-box', overflow:'hidden', width:'100%', height:'100vh' }} >
           <Editor
