@@ -2,10 +2,10 @@ import { Monaco } from "@monaco-editor/react";
 import parserx from "./parser";
 import parser2 from "./parser2"
 
-import { optionLib } from "./modules/options"
-import { mathLib } from "./modules/math"
-import { tcpLib } from "./modules/socket"
-import { stringLib } from "./modules/string"
+import { optionLib } from "./mods/options"
+import { mathLib } from "./mods/math"
+import { tcpLib } from "./mods/socket"
+import { stringLib } from "./mods/string"
 import { toEditorSettings } from "typescript";
 
 export default class editorX {
