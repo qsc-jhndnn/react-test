@@ -2,39 +2,46 @@ import './App.css';
 import React from 'react'
 import Editor from '@monaco-editor/react';
 import editorX from './editor'
+import { isTypeQueryNode } from 'typescript';
 
 class App extends React.Component {
+
+  editor = new editorX();
+
+  constructor(props) {
+    super(props);
+    this.editor = new editorX();
+    this.state = {
+      code : `function foo() return "hey" end\n\nbob = math.max(3,4)\n`
+    }
+    window.myApp = this;
+  }
   componentDidMount()  {
   }
 
-  editorWillMount(monaco) {
-
-    Math.log10(23);
-
-    Math.log10()
-
-  }
-
   handleEditorDidMount(editor, monaco) {
-    var editor = new editorX(editor, monaco);
-    monaco.languages.registerCompletionItemProvider("lua", editor.getLuaCompletionProvider(monaco));
-    monaco.languages.registerHoverProvider("lua", editor.getHoverProvider(monaco));
+    this.editor.init(editor, monaco);
   }
 
   render() {
-
-      let code = `function foo() return "hey" end\n\nbob = math.max(3,4)\n`;
       return (
         <div style={{ boxSizing:'border-box', overflow:'hidden', width:'100%', height:'100vh' }} >
           <Editor
             language="lua"
+            value="asdf"
             theme='vs-dark'
-            value={code}
-            beforeMount={this.editorWillMount}
-            onMount={this.handleEditorDidMount}
+            onMount={(e,m)=> { this.handleEditorDidMount( e,m ) }}
             />
         </div>
       );
+  }
+
+  setCode(code) {
+    this.setState({code: code});
+  }
+
+  getCode() {
+    return this.state.code;
   }
 }
 

@@ -24,7 +24,7 @@ export class mathLib extends optionLib {
         hover : "math.acos(x)",
         hoverDetails : "returns the arc cosine of x (in radians)",
         /* eslint-disable no-template-curly-in-string */
-        insertText : "acos(${1:x})"
+        insertText : "acos"
       },
       {
         name : "min",
@@ -32,7 +32,7 @@ export class mathLib extends optionLib {
         hover : "math.min(x,...)",
         hoverDetails : "Returns the minimum value among its arguments",
         /* eslint-disable no-template-curly-in-string */
-        insertText : "min(${1:x}, ${2:...})"
+        insertText : "min"
       },
       {
         name : "max",
@@ -40,7 +40,7 @@ export class mathLib extends optionLib {
         hover : "math.max(x,...)",
         hoverDetails : "returns the maximum value among its arguments",
         /* eslint-disable no-template-curly-in-string */
-        insertText : "max(${1:x}, ${2:...})"
+        insertText : "max"
       }
     ];
   }

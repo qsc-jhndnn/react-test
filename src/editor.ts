@@ -4,19 +4,42 @@ import parser2 from "./parser2"
 
 import { optionLib } from "./modules/options"
 import { mathLib } from "./modules/math"
+import { tcpLib } from "./modules/socket"
 import { stringLib } from "./modules/string"
+import { toEditorSettings } from "typescript";
 
 export default class editorX {
 
   monaco: Monaco;
+  editor: any;
 
   libs : Array<optionLib>;
   controls: Array<string>;
 
-  constructor(editor: any, monaco: Monaco) {
-    this.monaco = monaco;
-    this.libs = [ new mathLib(), new stringLib()];
+  constructor() {
+    this.controls = ["Control_1", "Mute", "AnotherOne"];
+    this.libs = [ new mathLib(), new stringLib(), new tcpLib()];
+    this.monaco = null;
+    this.editor = null;
+  }
 
+  init(editor: any, monaco: Monaco) {
+    this.monaco = monaco;
+    this.editor = editor;
+
+    let code = `function foo() return "hey" end\n\nbob = math.max(3,4)\n`;
+    if((window as any).webView_getCode)
+    {
+      code = (window as any).webView_getCode();
+    }
+    if((window as any).webView_getControls)
+    {
+      this.controls = (window as any).webView_getControls();
+    }
+
+    this.editor.setValue(code);
+    monaco.languages.registerCompletionItemProvider("lua", this.getLuaCompletionProvider(monaco));
+    monaco.languages.registerHoverProvider("lua", this.getHoverProvider(monaco));
 
     editor.getModel().onDidChangeContent((e) => {
       let model = editor.getModel();
@@ -37,11 +60,7 @@ export default class editorX {
         });
       });
       this.monaco.editor.setModelMarkers(model, model.id, markerData);
-
-
     });
-
-    this.controls = ["Control_1", "Control_2", "Mute"];
   }
 
   globalProposals() {
@@ -76,6 +95,22 @@ export default class editorX {
       insertText: 'function ${1:functionName}(${2:...})\n  ${3:--body}\nend\n',
       insertTextRules: this.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
     });
+
+    props.push({
+      label: 'for loop',
+      kind: this.monaco.languages.CompletionItemKind.Snippet,
+      detail: "loop over a table",
+      documentation: "loop over a table",
+      /* eslint-disable no-template-curly-in-string */
+      insertText: 'for ${1:key},${2:value} in pairs(${3:table}) do\n  ${4}\nend',
+      insertTextRules: this.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+    });
+
+    // get our module snippets
+    this.libs.forEach(lib => {
+      props = props.concat(lib.getSnippets(this.monaco));
+    });
+
     props.push({
       label: 'end',
       kind: this.monaco.languages.CompletionItemKind.Keyword,
@@ -138,6 +173,16 @@ export default class editorX {
     return this.globalProposals();
   }
 
+  isLibName(name: string)
+  {
+    let ret = false;
+    this.libs.forEach(lib => {
+      let modName = lib.name + ".";
+      if(name.startsWith(modName)) ret = true;;
+    });
+    return ret;
+  }
+
   provideCompletionItems(model: any, position: any, context: any, token: any) {
     let line = model.getValueInRange({ startLineNumber: position.lineNumber, startColumn: 1, endLineNumber: position.lineNumber, endColumn: position.column });
     let tokens = line.split(/(\s+)/);
@@ -147,13 +192,21 @@ export default class editorX {
     let sugs = this.getCompletionOptions(tok);
     // for right now if the user pressed a '.' don't show the parsed stuff
     if (context.triggerKind !== this.monaco.languages.CompletionTriggerKind.TriggerCharacter) {
-      let content = model.getValueInRange({ startLineNumber: 1, startColumn: 1, endLineNumber: position.lineNumber, endColumn: position.column });
+      // parse lua to get variables and functions 
+      // we want to ignore our current word we are typing
+      let endCol = position.column;
+      let currentWord = model.getWordUntilPosition(position);
+      if(currentWord)
+      {
+        endCol = currentWord.startColumn;
+      }
+      
+      let content = model.getValueInRange({ startLineNumber: 1, startColumn: 1, endLineNumber: position.lineNumber, endColumn: endCol });
       let parser = new parserx();
       let tokens = parser.get_tokens(content);
-      // parse lua to get variables and functions
       tokens.forEach(element => {
-        // hack for now....
-        if(!element.label.startsWith("math.") && !element.label.startsWith("string."))
+        let isLib = this.isLibName(element.label);
+        if(!isLib)
         {
           sugs.push({
             label: element.label,

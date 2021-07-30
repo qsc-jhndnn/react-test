@@ -28,6 +28,10 @@ export class optionLib {
     return new Array<option>();
   }
 
+  getSnippetsInternal() : Array<option> {
+    return new Array<option>();
+  }
+
   getHover(func:string) : any {
     let contents = [] as any;
     this.getOptionsInternal().forEach(opt => {
@@ -57,6 +61,24 @@ export class optionLib {
     });
     return x;
   }
+
+  getSnippets(monaco:Monaco) : any {
+    let kind = monaco.languages.CompletionItemKind.Snippet;
+    let rules = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet;
+    let x =  this.getSnippetsInternal().map((value:option) => {
+      return {
+        label: value.name,
+        kind: kind,
+        detail: value.hoverDetails,
+        documentation: "documentation",
+        insertText: value.insertText,
+        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+      };
+    });
+    return x;
+
+  }
+
 
 
 }
