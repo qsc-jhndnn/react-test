@@ -47,9 +47,14 @@ export default class editorX {
 
     editor.getModel().onDidChangeContent((e) => {
       let model = editor.getModel();
+      let code = model.getValue();
 
+      if((window as any).webView_setCode)
+      {
+        (window as any).webView_setCode(code);
+      }
       let p2 = new parser2();
-      let errors = p2.check_code(model.getValue());
+      let errors = p2.check_code(code);
 
       var markerData = [] as any;
       errors.forEach(err => {
