@@ -36,7 +36,7 @@ export class tcpLib extends optionLib {
       "",
     ];
     snips.push({
-      name : "discrete socket event handlers",
+      name : "TCP Socket : discrete event handlers",
       insertText : sockSnippet.join("\n"),
       hover : "",
       hoverDetails : "",
@@ -59,7 +59,7 @@ export class tcpLib extends optionLib {
       "end",
     ];
     snips.push({
-      name : "this socket event handler",
+      name : "TCP Socket : event handler",
       hover : "",
       hoverDetails : "",
       insertText : sockSnippet2.join("\n") 
