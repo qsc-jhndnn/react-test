@@ -1,17 +1,18 @@
 import { Monaco } from "@monaco-editor/react";
 
-
 export class option {
   name: string;
-  hover: string;
-  hoverDetails: string;
-  insertText: string;
+  help: string;
+  details: string;
+  insertText?: string;
+  backSpace?: boolean;
 
   constructor() {
     this.name = "";
-    this.hover = "";
-    this.hoverDetails = "";
+    this.help = "";
+    this.details = "";
     this.insertText = "";
+    this.backSpace = false;
   }
 }
 
@@ -24,7 +25,7 @@ export class optionLib {
     this.description = "";
   }
 
-  getOptionsInternal(): Array<option> {
+  getOptionsInternal(tok:string): Array<option> {
     return new Array<option>();
   }
 
@@ -34,32 +35,38 @@ export class optionLib {
 
   getHover(func:string) : any {
     let contents = [] as any;
-    this.getOptionsInternal().forEach(opt => {
+    this.getOptionsInternal(func).forEach(opt => {
       if(opt.name === func) {
-        contents.push({ value: '```lua\n(function) '+opt.hover+'\n```' });
-        contents.push({ value: opt.hoverDetails });
+        contents.push({ value: '```lua\n(function) '+opt.details+'\n```' });
+        contents.push({ value: opt.help });
       }
     });
     return contents;
   }
 
-  getOptions(monaco:Monaco) : any {
+  getOptions(monaco:Monaco, position:any, tok:string) : any {
     let kind = monaco.languages.CompletionItemKind.Function;
     let rules = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet;
-    let x =  this.getOptionsInternal().map((value:option) => {
+    let x =  this.getOptionsInternal(tok).map((value:option) => {
       return {
         label: value.name,
         kind: kind,
-        detail: value.hoverDetails,
-        documentation: "documentation",
-        /* eslint-disable no-template-curly-in-string */
-        insertText: value.name,
+        detail: value.details,
+        documentation: value.help,
+        insertText: value.insertText ? value.insertText : value.name,
         insertTextRules: rules,
+        additionalTextEdits: value.backSpace ? [ monaco.ISingleEditOperation = { 
+          text:"", 
+          range: monaco.IRange = { 
+            startLineNumber: position.lineNumber, 
+            endLineNumber: position.lineNumber, 
+            startColumn: position.column -1, 
+            endColumn: position.column 
+          }
+        }] : null,
         commitCharacters : ["("]
-
       };
-    });
-    return x;
+    });    return x;
   }
 
   getSnippets(monaco:Monaco) : any {
@@ -69,7 +76,7 @@ export class optionLib {
       return {
         label: value.name,
         kind: kind,
-        detail: value.hoverDetails,
+        detail: value.details,
         documentation: "documentation",
         insertText: value.insertText,
         insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,

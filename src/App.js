@@ -2,7 +2,6 @@ import './App.css';
 import React from 'react'
 import Editor from '@monaco-editor/react';
 import editorX from './editor'
-import { isTypeQueryNode } from 'typescript';
 
 class App extends React.Component {
 
@@ -11,9 +10,6 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.editor = new editorX();
-    this.state = {
-      code : `function foo() return "hey" end\n\nbob = math.max(3,4)\n`
-    }
     window.myApp = this;
   }
   componentDidMount()  {
@@ -34,14 +30,6 @@ class App extends React.Component {
             />
         </div>
       );
-  }
-
-  setCode(code) {
-    this.setState({code: code});
-  }
-
-  getCode() {
-    return this.state.code;
   }
 }
 

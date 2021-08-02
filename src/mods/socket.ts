@@ -8,13 +8,13 @@ export class tcpLib extends optionLib {
     this.description = "TCP Socket Library"
   }
 
-  getOptionsInternal(): Array<option> {
+  getOptionsInternal(tok:string): Array<option> {
     return [
       {
         name : "New",
         // for hover
-        hover : "TcpSocket.New()",
-        hoverDetails : "creates a new TCP Socket",
+        details : "TcpSocket.New()",
+        help : "creates a new TCP Socket",
         /* eslint-disable no-template-curly-in-string */
         insertText : "New"
       },
@@ -38,8 +38,8 @@ export class tcpLib extends optionLib {
     snips.push({
       name : "TCP Socket : discrete event handlers",
       insertText : sockSnippet.join("\n"),
-      hover : "",
-      hoverDetails : "",
+      help : "",
+      details : "",
     });
     let sockSnippet2 = [
       "${1:socket}.EventHandler = function( sock, evt, err )",
@@ -60,8 +60,8 @@ export class tcpLib extends optionLib {
     ];
     snips.push({
       name : "TCP Socket : event handler",
-      hover : "",
-      hoverDetails : "",
+      help : "",
+      details : "",
       insertText : sockSnippet2.join("\n") 
     });
     return snips;

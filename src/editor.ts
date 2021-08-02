@@ -6,7 +6,8 @@ import { optionLib } from "./mods/options"
 import { mathLib } from "./mods/math"
 import { tcpLib } from "./mods/socket"
 import { stringLib } from "./mods/string"
-import { toEditorSettings } from "typescript";
+import { controlsLib } from "./mods/controls";
+import { baseLua } from "./mods/lua";
 
 export default class editorX {
 
@@ -14,11 +15,14 @@ export default class editorX {
   editor: any;
 
   libs : Array<optionLib>;
-  controls: Array<string>;
+  controlsLib : controlsLib;
+  luaLib: baseLua;
 
   constructor() {
-    this.controls = ["Control_1", "Mute", "AnotherOne"];
-    this.libs = [ new mathLib(), new stringLib(), new tcpLib()];
+    // keep around so we can set the controls
+    this.controlsLib = new controlsLib();
+    this.luaLib = new baseLua();
+    this.libs = [ new mathLib(), new stringLib(), new tcpLib(), this.controlsLib];
     this.monaco = null;
     this.editor = null;
   }
@@ -34,7 +38,7 @@ export default class editorX {
     }
     if((window as any).webView_getControls)
     {
-      this.controls = (window as any).webView_getControls();
+      this.controlsLib.controls = (window as any).webView_getControls();
     }
 
     this.editor.setValue(code);
@@ -74,99 +78,20 @@ export default class editorX {
         commitCharacters : ["."]
       });
     });
-    props.push({
-      label: 'Controls',
-      kind: this.monaco.languages.CompletionItemKind.Module,
-      documentation: "The controls",
-      insertText: 'Controls',
-    });
-    props.push({
-      label: 'function',
-      kind: this.monaco.languages.CompletionItemKind.Keyword,
-      documentation: "write a function",
-      insertText: 'function ',
-    });
-    props.push({
-      label: 'new function',
-      kind: this.monaco.languages.CompletionItemKind.Snippet,
-      detail: "function snippet",
-      documentation: "create a function",
-      /* eslint-disable no-template-curly-in-string */
-      insertText: 'function ${1:functionName}(${2:...})\n  ${3:--body}\nend\n',
-      insertTextRules: this.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-    });
-
-    props.push({
-      label: 'for loop',
-      kind: this.monaco.languages.CompletionItemKind.Snippet,
-      detail: "loop over a table",
-      documentation: "loop over a table",
-      /* eslint-disable no-template-curly-in-string */
-      insertText: 'for ${1:key},${2:value} in pairs(${3:table}) do\n  ${4}\nend',
-      insertTextRules: this.monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-    });
-
+    this.luaLib.getProposals(this.monaco, props);
     // get our module snippets
     this.libs.forEach(lib => {
       props = props.concat(lib.getSnippets(this.monaco));
     });
-
-    props.push({
-      label: 'end',
-      kind: this.monaco.languages.CompletionItemKind.Keyword,
-      documentation: "STOP IT!",
-      insertText: 'end ',
-    });
     return props;
   }
 
-  createControlOptions(tok: string) {
-    var options = [] as any;
-    if (tok === "Controls.") {
-      this.controls.forEach(ctl => {
-        let opt = {
-          label: ctl,
-          kind: this.monaco.languages.CompletionItemKind.Field,
-          documentation: "a control",
-          insertText: ctl
-        };
-        options.push(opt);
-      });
-    }
-    else {
-      // split on .
-      let toks = tok.split(".");
-      if (toks.length === 3 && toks[2] === "") {
-        if (this.controls.includes(toks[1])) {
-          options.push({
-            label: 'String',
-            kind: this.monaco.languages.CompletionItemKind.Field,
-            insertText: "String"
-          });
-          options.push({
-            label: 'Value',
-            kind: this.monaco.languages.CompletionItemKind.Field,
-            insertText: "Value"
-          });
-          options.push({
-            label: 'Position',
-            kind: this.monaco.languages.CompletionItemKind.Field,
-            insertText: "Position"
-          });
-        }
-
-      }
-    }
-    return options;
-  }
-
-  getCompletionOptions(tok: string) {
+  getCompletionOptions(tok: string, position: any) {
     if (tok.length > 0 && tok[tok.length - 1] === ".") {
       let options = [];
-      let libName = tok.substr(0,tok.length-1);
-      if (tok.startsWith("Controls")) return this.createControlOptions(tok);
+      let libName = tok.substr(0,tok.indexOf("."));
       this.libs.forEach(lib => {
-          if(lib.name === libName) options = lib.getOptions(this.monaco);
+          if(lib.name === libName) options = lib.getOptions(this.monaco, position, tok);
       });
       return options;
     }
@@ -189,7 +114,7 @@ export default class editorX {
 
     let tok = tokens[tokens.length - 1];
     // get suggestions
-    let sugs = this.getCompletionOptions(tok);
+    let sugs = this.getCompletionOptions(tok, position);
     // for right now if the user pressed a '.' don't show the parsed stuff
     if (context.triggerKind !== this.monaco.languages.CompletionTriggerKind.TriggerCharacter) {
       // parse lua to get variables and functions 

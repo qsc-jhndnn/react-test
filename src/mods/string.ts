@@ -8,12 +8,12 @@ export class stringLib extends optionLib {
     this.description = "Some string stuff"
   }
 
-  getOptionsInternal(): Array<option> {
+  getOptionsInternal(tok:string): Array<option> {
     return [
       {
         name : "format",
-        hover : "string.format(str,...)",
-        hoverDetails : "formats a string",
+        details : "string.format(str,...)",
+        help : "formats a string",
         /* eslint-disable no-template-curly-in-string */
         insertText : "format(${1:x}, ${2:...})"
       },
