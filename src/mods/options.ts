@@ -69,6 +69,15 @@ export class optionLib {
     });    return x;
   }
 
+  getOptionNames() : any {
+    return Array.from(this.getOptionsInternal(""), opt=>opt.name);
+  }
+
+  getOptionsRegex() : any {
+    let opts = this.getOptionNames();
+    return new RegExp(`(${this.name})(.)(${opts.join('|')})`);
+  }
+
   getSnippets(monaco:Monaco) : any {
     let kind = monaco.languages.CompletionItemKind.Snippet;
     let x =  this.getSnippetsInternal().map((value:option) => {

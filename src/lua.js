@@ -38,7 +38,7 @@ class luaLang {
 			defaultToken: '',
 			tokenPostfix: '.qsclua',
 			modules: [
-				'foo.bar'
+				'foo'
 			],
 			keywords: [
 				'and',
@@ -111,6 +111,7 @@ class luaLang {
 						string string.sql keyword keyword.flow keyword.json keyword.flow.scss operator.scss
 						operator.sql operator.swift predefined.sql
 					*/
+//					[/(math)(.)(sin|cos)/, ['type', '', 'predefined.sql' ]],
 					[
 						/[a-zA-Z_]\w*/,
 						{

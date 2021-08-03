@@ -33,7 +33,7 @@ export default class editorX {
     this.monaco = monaco;
     this.editor = editor;
 
-    let code = `function foo() return "hey" end\n\nbob = math.max(3,4)\n`;
+    let code = `function foo() return "hey" end\n\nbob = math.sin(3)\nbob = math.sinc(3)\n\nbob = math.max(3)`;
     if((window as any).webView_getCode)
     {
       code = (window as any).webView_getCode();
@@ -45,18 +45,21 @@ export default class editorX {
 
     this.editor.setValue(code);
 
-    monaco.languages.register({id: "qsclua"});
+    let langName = "qsclua";
+    monaco.languages.register({id: langName});
 
     let lua = luaLang.get();
 
     this.libs.forEach(lib => {
       lua.language.modules.push(lib.name);
+      lua.language.tokenizer.root.unshift([lib.getOptionsRegex(), ['keyword.flow', '', 'keyword.flow' ]]);
     });
 
-    monaco.languages.setLanguageConfiguration('qsclua', lua.conf);
-    monaco.languages.setMonarchTokensProvider('qsclua', lua.language);
-    monaco.languages.registerCompletionItemProvider("qsclua", this.getLuaCompletionProvider(monaco));
-    monaco.languages.registerHoverProvider("qsclua", this.getHoverProvider(monaco));
+
+    monaco.languages.setLanguageConfiguration(langName, lua.conf);
+    monaco.languages.setMonarchTokensProvider(langName, lua.language);
+    monaco.languages.registerCompletionItemProvider(langName, this.getLuaCompletionProvider(monaco));
+    monaco.languages.registerHoverProvider(langName, this.getHoverProvider(monaco));
 
     editor.getModel().onDidChangeContent((e) => {
       let model = editor.getModel();

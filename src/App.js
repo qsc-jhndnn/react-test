@@ -23,7 +23,7 @@ class App extends React.Component {
       return (
         <div style={{ boxSizing:'border-box', overflow:'hidden', width:'100%', height:'100vh' }} >
           <Editor
-            language="qsclua"
+          language="qsclua"
             theme='vs-dark'
             onMount={(e,m)=> { this.handleEditorDidMount( e,m ) }}
             />
