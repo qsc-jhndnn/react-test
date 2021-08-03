@@ -15,7 +15,6 @@ class visitor {
     {
       case luaParser.RULE_chunk: return "chunk";
       case luaParser.RULE_block: return "block";
-      case luaParser.RULE_block: return "block";
       case luaParser.RULE_stat: return "stat";
       case luaParser.RULE_attnamelist: return "attnamelist";
       case luaParser.RULE_attrib: return "attrib";
@@ -50,9 +49,8 @@ class visitor {
       case luaParser.RULE_operatorPower: return "operatorPower";
       case luaParser.RULE_number: return "number";
       case luaParser.RULE_string: return "string";
+      default: return "";
     }
-    console.log(rule);
-    return "??";
   }
 
   getKeywords() {

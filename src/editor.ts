@@ -1,5 +1,5 @@
 import { Monaco } from "@monaco-editor/react";
-import parserx from "./parser";
+import parserx from "./antlr/parser";
 import parser2 from "./parser2"
 
 import { optionLib } from "./mods/options"
@@ -8,6 +8,8 @@ import { tcpLib } from "./mods/socket"
 import { stringLib } from "./mods/string"
 import { controlsLib } from "./mods/controls";
 import { baseLua } from "./mods/lua";
+
+import { luaLang } from "./lua";
 
 export default class editorX {
 
@@ -42,8 +44,19 @@ export default class editorX {
     }
 
     this.editor.setValue(code);
-    monaco.languages.registerCompletionItemProvider("lua", this.getLuaCompletionProvider(monaco));
-    monaco.languages.registerHoverProvider("lua", this.getHoverProvider(monaco));
+
+    monaco.languages.register({id: "qsclua"});
+
+    let lua = luaLang.get();
+
+    this.libs.forEach(lib => {
+      lua.language.modules.push(lib.name);
+    });
+
+    monaco.languages.setLanguageConfiguration('qsclua', lua.conf);
+    monaco.languages.setMonarchTokensProvider('qsclua', lua.language);
+    monaco.languages.registerCompletionItemProvider("qsclua", this.getLuaCompletionProvider(monaco));
+    monaco.languages.registerHoverProvider("qsclua", this.getHoverProvider(monaco));
 
     editor.getModel().onDidChangeContent((e) => {
       let model = editor.getModel();

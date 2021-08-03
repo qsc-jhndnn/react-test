@@ -71,7 +71,6 @@ export class optionLib {
 
   getSnippets(monaco:Monaco) : any {
     let kind = monaco.languages.CompletionItemKind.Snippet;
-    let rules = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet;
     let x =  this.getSnippetsInternal().map((value:option) => {
       return {
         label: value.name,
