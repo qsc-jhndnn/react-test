@@ -21,9 +21,9 @@ class App extends React.Component {
 
   render() {
       return (
-        <div style={{ boxSizing:'border-box', overflow:'hidden', width:'100%', height:'100vh' }} >
+        <div style={{ boxSizing:'border-box', overflow:'hidden', width:'100%', height:'100vh', backgroundColor: '#1e1e1e' }} >
           <Editor
-          language="qsclua"
+            language="qsclua"
             theme='vs-dark'
             onMount={(e,m)=> { this.handleEditorDidMount( e,m ) }}
             />

@@ -1,15 +1,34 @@
 import { Monaco } from "@monaco-editor/react";
 import parserx from "./antlr/parser";
-import parser2 from "./parser2"
+import * as syntax from "./checkSyntax"
 
-import { optionLib } from "./mods/options"
-import { mathLib } from "./mods/math"
-import { tcpLib } from "./mods/socket"
-import { stringLib } from "./mods/string"
-import { controlsLib } from "./mods/controls";
-import { baseLua } from "./mods/lua";
+import { optionLib } from "./langServer/modules/options"
 
-import { luaLang } from "./lua";
+import controlsLib from "./langServer/modules/controls";
+import cryptoLib from "./langServer/modules/crypto"
+import designLib from "./langServer/modules/design"
+import emailLib from "./langServer/modules/email"
+import httpLib from "./langServer/modules/httpClient" 
+import logLib from "./langServer/modules/log"
+import mathLib from "./langServer/modules/math"
+import mixerLib from "./langServer/modules/mixer"
+import namedControlLib from "./langServer/modules/namedControl"
+import networkLib from "./langServer/modules/network"
+import qlibLib from "./langServer/modules/qlib" 
+import sshLib from "./langServer/modules/ssh" 
+import stringLib from "./langServer/modules/string"
+import systemLib from "./langServer/modules/system"
+import tableLib from "./langServer/modules/table"
+import tcpLib from "./langServer/modules/tcpSocket"
+import tcpServerLib from "./langServer/modules/tcpSocketServer"
+import timerLib from "./langServer/modules/timer"
+import uciLib from "./langServer/modules/uci"
+import udpLib from "./langServer/modules/udpClient"
+
+import * as luaMonarch from "./luaMonarch";
+
+import * as keywords from "./langServer/keywords"
+import * as globals from "./langServer/globals"
 
 export default class editorX {
 
@@ -18,22 +37,50 @@ export default class editorX {
 
   libs : Array<optionLib>;
   controlsLib : controlsLib;
-  luaLib: baseLua;
 
   constructor() {
     // keep around so we can set the controls
     this.controlsLib = new controlsLib();
-    this.luaLib = new baseLua();
-    this.libs = [ new mathLib(), new stringLib(), new tcpLib(), this.controlsLib];
+    this.libs = [ 
+      new logLib(), 
+      new mathLib(), 
+      new stringLib(), 
+      new tcpLib(), 
+      new tableLib(), 
+      new timerLib(), 
+      new uciLib(),
+      new namedControlLib(),
+      new systemLib(),
+      new httpLib(),
+      new qlibLib(),
+      new sshLib(),
+      new emailLib(),
+      new mixerLib(),
+      new tcpServerLib(),
+      new udpLib(),
+      new cryptoLib(),
+      new designLib(),
+      new networkLib(),
+      this.controlsLib];
     this.monaco = null;
     this.editor = null;
+    (window as any).editor = this;
   }
 
+  codeChanged() {
+    alert("codeChanged");
+  }
+
+
+  controlsChanged() {
+    alert("controlsChanged");
+  }
+  
   init(editor: any, monaco: Monaco) {
     this.monaco = monaco;
     this.editor = editor;
-
-    let code = `function foo() return "hey" end\n\nbob = math.sin(3)\nbob = math.sinc(3)\n\nbob = math.max(3)`;
+    this.editor.updateOptions({roundedSelection: false});
+    let code = `function foo() return "hey" end\n\nbob = math.sin(3)\nbob = math.sinc(3)\n\nbob = math.max(3)\n\nprint(1234)`;
     if((window as any).webView_getCode)
     {
       code = (window as any).webView_getCode();
@@ -42,19 +89,20 @@ export default class editorX {
     {
       this.controlsLib.controls = (window as any).webView_getControls();
     }
-
     this.editor.setValue(code);
 
     let langName = "qsclua";
     monaco.languages.register({id: langName});
 
-    let lua = luaLang.get();
+    let lua = luaMonarch.get();
 
     this.libs.forEach(lib => {
       lua.language.modules.push(lib.name);
       lua.language.tokenizer.root.unshift([lib.getOptionsRegex(), ['keyword.flow', '', 'keyword.flow' ]]);
     });
 
+    lua.language.globals = globals.getFunctionNames();
+    lua.language.keywords = keywords.list();
 
     monaco.languages.setLanguageConfiguration(langName, lua.conf);
     monaco.languages.setMonarchTokensProvider(langName, lua.language);
@@ -69,27 +117,15 @@ export default class editorX {
       {
         (window as any).webView_setCode(code);
       }
-      let p2 = new parser2();
-      let errors = p2.check_code(code);
 
-      var markerData = [] as any;
-      errors.forEach(err => {
-        console.log(err);
-        markerData.push({
-          message: err.msg,
-          startLineNumber: err.line,
-          endLineNumber: err.line,
-          startColumn: err.column,
-          endColumn: err.column,
-          severity: this.monaco.MarkerSeverity.Error,
-        });
-      });
-      this.monaco.editor.setModelMarkers(model, model.id, markerData);
+      let errors = syntax.check(this.monaco, code);
+      this.monaco.editor.setModelMarkers(model, model.id, errors);
     });
   }
 
   globalProposals() {
     let props = [] as any;
+    //push each module name
     this.libs.forEach(lib => {
       props.push({
         label: lib.name,
@@ -99,7 +135,9 @@ export default class editorX {
         commitCharacters : ["."]
       });
     });
-    this.luaLib.getProposals(this.monaco, props);
+    props = props.concat(keywords.get(this.monaco));
+    props = props.concat(globals.getSnippets(this.monaco));
+    props = props.concat(globals.getFunctions(this.monaco));
     // get our module snippets
     this.libs.forEach(lib => {
       props = props.concat(lib.getSnippets(this.monaco));
@@ -119,7 +157,7 @@ export default class editorX {
     return this.globalProposals();
   }
 
-  isLibName(name: string)
+  isLibName(name: string) : boolean
   {
     let ret = false;
     this.libs.forEach(lib => {
@@ -130,11 +168,13 @@ export default class editorX {
   }
 
   provideCompletionItems(model: any, position: any, context: any, token: any) {
+    // get full line
     let line = model.getValueInRange({ startLineNumber: position.lineNumber, startColumn: 1, endLineNumber: position.lineNumber, endColumn: position.column });
+    // split into whitespace tokens
     let tokens = line.split(/(\s+)/);
-
+    // get last token
     let tok = tokens[tokens.length - 1];
-    // get suggestions
+
     let sugs = this.getCompletionOptions(tok, position);
     // for right now if the user pressed a '.' don't show the parsed stuff
     if (context.triggerKind !== this.monaco.languages.CompletionTriggerKind.TriggerCharacter) {
@@ -151,8 +191,7 @@ export default class editorX {
       let parser = new parserx();
       let tokens = parser.get_tokens(content);
       tokens.forEach(element => {
-        let isLib = this.isLibName(element.label);
-        if(!isLib)
+        if(!this.isLibName(element.label) && !globals.is(element.label))
         {
           sugs.push({
             label: element.label,
@@ -167,13 +206,22 @@ export default class editorX {
     return { suggestions: sugs };
   }
 
+  // defines to make the code more understandable
+  periodChar = 46;
+  zeroChar = 48;
+  nineChar = 57;
+  AChar = 65;
+  ZChar = 90;
+  underscoreChar = 95;
+  aChar = 97;
+  zChar = 122;
   isWhiteSpace(str:string) {
     let code = str.charCodeAt(0);
-    if( code === 46 ) return false;
-    if( code >= 48 && code <= 57) return false;
-    if( code >= 65 && code <= 90) return false;
-    if( code === 95 ) return false;
-    if( code >= 97 && code <= 122) return false;
+    if( code === this.periodChar ) return false; 
+    if( code >= this.zeroChar && code <= this.nineChar) return false;
+    if( code >= this.AChar && code <= this.ZChar) return false;
+    if( code === this.underscoreChar ) return false;
+    if( code >= this.aChar && code <= this.zChar) return false;
     return true;
   }
 
@@ -194,14 +242,21 @@ export default class editorX {
     let hoverToken = line.substr(startColumn,endColumn-startColumn).trim();
     console.log(`hover ${hoverToken}`);
 
-    let toks = hoverToken.split(".");
-    if(toks.length === 2) {
-      let module = toks[0];
-      let func = toks[1];
-      this.libs.forEach(lib => {
-        if(lib.name === module) contents = lib.getHover(func);
-      });
+    // see if this is a global we are hovering over
+    contents = globals.getHover(hoverToken);
+    
+    if(contents.length === 0) {
+      let toks = hoverToken.split(".");
+      if(toks.length >= 2) {
+        let module = toks[0];
+        let funcs = toks.slice(1);
+        // join the rest 
+        this.libs.forEach(lib => {
+          if(lib.name === module) contents = lib.getHover(funcs);
+        });
+      }
     }
+
     return { 
       contents: contents, 
       range : {
@@ -220,8 +275,10 @@ export default class editorX {
   getLuaCompletionProvider(monaco: Monaco) {
     return {
       triggerCharacters: ['.'],
-      provideCompletionItems: (model: any, position: any, context: any, token: any) => { return this.provideCompletionItems(model, position, context, token); },
-      resolveCompletionItem: (item: any, token: any) => { return this.resolveCompletionItem(item, token) },
+      provideCompletionItems: (model: any, position: any, context: any, token: any) => { 
+        return this.provideCompletionItems(model, position, context, token); 
+      },
+//      resolveCompletionItem: (item: any, token: any) => { return this.resolveCompletionItem(item, token) },
     }
   }
 
