@@ -8,6 +8,10 @@ export default class lib extends optionLib {
     this.description = "Some table stuff"
   }
 
+  getHelpInternal(func:Array<string>) : string {
+    return "5 - Table Manipulation.htm";
+  }
+
   getOptionsInternal(tok:string): Array<option> {
     return [
       {

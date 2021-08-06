@@ -41,8 +41,8 @@ export class optionLib {
 
 
   getHelp(func:Array<string>) : string {
-    if(this.isQSC) return "Using_Lua_in_Q-SYS/" + this.getHelpInternal(func);
-    else return "Lua_5.3_Reference_Manual/Standard_Libraries/" + this.getHelpInternal(func);
+    if(this.isQSC) return "Using Lua in Q-SYS/" + this.getHelpInternal(func);
+    else return "Lua 5.3 Reference Manual/Standard Libraries/" + this.getHelpInternal(func);
   }
 
   getHover(func:Array<string>) : any {

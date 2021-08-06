@@ -14,6 +14,7 @@ import mathLib from "./langServer/modules/math"
 import mixerLib from "./langServer/modules/mixer"
 import namedControlLib from "./langServer/modules/namedControl"
 import networkLib from "./langServer/modules/network"
+import osLib from "./langServer/modules/os"
 import qlibLib from "./langServer/modules/qlib" 
 import sshLib from "./langServer/modules/ssh" 
 import stringLib from "./langServer/modules/string"
@@ -61,6 +62,7 @@ export default class editorX {
       new cryptoLib(),
       new designLib(),
       new networkLib(),
+      new osLib(),
       this.controlsLib];
     this.monaco = null;
     this.editor = null;
@@ -70,7 +72,6 @@ export default class editorX {
   codeChanged() {
     alert("codeChanged");
   }
-
 
   controlsChanged() {
     alert("controlsChanged");
@@ -112,8 +113,8 @@ export default class editorX {
     editor.addAction({
       id: "myHelp",
       label: "Help",
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_V],
-      contextMenuGroupId: "9_cutcopypaste",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_H],
+      contextMenuGroupId: "navigation",
       run: (editor) => { this.provideHelp(editor); }
     });
 
@@ -278,6 +279,8 @@ export default class editorX {
         (window as any).webView_help(help);
       }
       else {
+        // online help uses underscore instead of spaced
+        help = help.replaceAll(" ", "_");
         window.open("https://q-syshelp.qsc.com/#Control_Scripting/"+help)
       }
     }

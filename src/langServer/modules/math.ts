@@ -9,7 +9,7 @@ export default class lib extends optionLib {
   }
 
   getHelpInternal(func:Array<string>) : string {
-    return "6_-_Mathematical_Functions.htm";
+    return "6 - Mathematical Functions.htm";
   }
 
   getOptionsInternal(tok: string): Array<option> {
