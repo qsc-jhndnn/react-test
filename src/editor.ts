@@ -109,6 +109,14 @@ export default class editorX {
     monaco.languages.registerCompletionItemProvider(langName, this.getLuaCompletionProvider(monaco));
     monaco.languages.registerHoverProvider(langName, this.getHoverProvider(monaco));
 
+    editor.addAction({
+      id: "myHelp",
+      label: "Help",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_V],
+      contextMenuGroupId: "9_cutcopypaste",
+      run: (editor) => { this.provideHelp(editor); }
+    });
+
     editor.getModel().onDidChangeContent((e) => {
       let model = editor.getModel();
       let code = model.getValue();
@@ -225,9 +233,7 @@ export default class editorX {
     return true;
   }
 
-  provideHover(model: any, position: any, token: any) {
-    let contents = [] as any;
-
+  getTokenAtPosition(model: any, position: any) : any {
     let line = model.getLineContent(position.lineNumber);
     // go forward and back until we get to whitespace
     let startColumn = position.column-1;
@@ -239,20 +245,64 @@ export default class editorX {
     while(endColumn < line.length && !this.isWhiteSpace(line[endColumn])) {
       endColumn++;
     }
-    let hoverToken = line.substr(startColumn,endColumn-startColumn).trim();
-    console.log(`hover ${hoverToken}`);
+    return {
+      token : line.substr(startColumn,endColumn-startColumn).trim(),
+      startColumn: startColumn,
+      endColumn: endColumn
+    }
+  }
+
+  getModuleInfo(str:string) : any {
+    let toks = str.split(".");
+    if(toks.length >= 2) {
+      return { name: toks[0], functions: toks.slice(1) }
+    }
+    return null;
+  }
+
+  provideHelp(editor: any) {
+    let tok = this.getTokenAtPosition(editor.getModel(), editor.getPosition());
+    let modInfo = this.getModuleInfo(tok.token);
+    let help;
+    if(modInfo) {
+      this.libs.forEach(lib => {
+        if(modInfo.name === lib.name) {
+          help = lib.getHelp(modInfo.functions);
+          return false;
+        } 
+      });
+    }
+    if(help) {
+      if((window as any).webView_help)
+      {
+        (window as any).webView_help(help);
+      }
+      else {
+        window.open("https://q-syshelp.qsc.com/#Control_Scripting/"+help)
+      }
+    }
+
+  }
+
+  provideHover(model: any, position: any, token: any) {
+    let contents = [] as any;
+
+    let tok = this.getTokenAtPosition(model, position);
+
+    console.log(`hover ${tok.token}`);
 
     // see if this is a global we are hovering over
-    contents = globals.getHover(hoverToken);
+    contents = globals.getHover(tok.token);
     
+    // see if it's in the form of MODULE_NAME.XXX.YYY.ZZZ.....
     if(contents.length === 0) {
-      let toks = hoverToken.split(".");
-      if(toks.length >= 2) {
-        let module = toks[0];
-        let funcs = toks.slice(1);
-        // join the rest 
+
+      let modInfo = this.getModuleInfo(tok.token);
+      if(modInfo) {
         this.libs.forEach(lib => {
-          if(lib.name === module) contents = lib.getHover(funcs);
+          if(modInfo.name === lib.name) {
+            contents  = lib.getHover(modInfo.functions);
+          }
         });
       }
     }
@@ -260,8 +310,8 @@ export default class editorX {
     return { 
       contents: contents, 
       range : {
-        startColumn: startColumn+1,
-        endColumn: endColumn+1,
+        startColumn: tok.startColumn+1,
+        endColumn: tok.endColumn+1,
         startLineNumber: position.lineNumber,
         endLineNumber:position.lineNumber
       } };

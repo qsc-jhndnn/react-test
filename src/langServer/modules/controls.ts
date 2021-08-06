@@ -9,6 +9,11 @@ export default class lib extends optionLib {
     this.controls = ["Control_1", "Mute", "AnotherOne", "With a space"];
     this.name = "Controls";
     this.description = "Controls"
+    this.isQSC = true;
+  }
+
+  getHelpInternal(func:Array<string>) : string {
+    return "Controls_IO.htm";
   }
 
   getControlOptions() : Array<option> {

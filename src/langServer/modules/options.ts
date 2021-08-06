@@ -20,6 +20,7 @@ export class option {
 export class optionLib {
   name: string;
   description: string;
+  isQSC? : boolean;
 
   constructor() {
     this.name = "";
@@ -32,6 +33,16 @@ export class optionLib {
 
   getSnippetsInternal() : Array<option> {
     return new Array<option>();
+  }
+
+  getHelpInternal(func:Array<string>) : string {
+    return "";
+  }
+
+
+  getHelp(func:Array<string>) : string {
+    if(this.isQSC) return "Using_Lua_in_Q-SYS/" + this.getHelpInternal(func);
+    else return "Lua_5.3_Reference_Manual/Standard_Libraries/" + this.getHelpInternal(func);
   }
 
   getHover(func:Array<string>) : any {
